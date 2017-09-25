@@ -90,6 +90,6 @@ Assert.AreSame(expected.DevelopmentDepartment.Title, expected.DevelopmentDepartm
 Remute does not use reflection / Activator.CreateInstance for object creation. Instead cached lambda expressions are used that demonstrates great performance.
 
 ## Get it
-Remute available as .Net Standard assembly via Nuget
+Remute is available as .Net Standard assembly via Nuget
 
 `Install-Package Remute`
