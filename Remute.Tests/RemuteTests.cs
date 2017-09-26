@@ -49,5 +49,33 @@ namespace Remute.Tests
             Assert.AreSame(organization.Name, actual.Name);
             Assert.AreSame(organization.DevelopmentDepartment.Title, organization.DevelopmentDepartment.Title);
         }
+
+        [TestMethod]
+        public void UnableToFindConstructor_ThrowsException()
+        {
+            var invalid = new InvalidMultipleConstructor();
+            var remute = new Remute();
+            try
+            {
+                invalid = remute.With(invalid, x => x.Property1, "test");
+            }
+            catch (Exception ex) when (ex.Message == $"Unable to find appropriate constructor of type '{nameof(InvalidMultipleConstructor)}'.")
+            {
+            }
+        }
+
+        [TestMethod]
+        public void UnableToFindProperty_ThrowsException()
+        {
+            var invalid = new InvalidProperty("property");
+            var remute = new Remute();
+            try
+            {
+                invalid = remute.With(invalid, x => x.Property1, "test");
+            }
+            catch (Exception ex) when (ex.Message == $"Unable to find appropriate property to use as a constructor parameter 'property'. Type '{nameof(InvalidProperty)}'.")
+            {
+            }
+        }
     }
 }

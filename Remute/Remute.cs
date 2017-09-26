@@ -54,9 +54,7 @@ namespace Remute
 
         private ActivationContext GetActivationContext(Type type)
         {
-            var result = default(ActivationContext);
-
-            if (ActivationContextCach.TryGetValue(type, out result))
+            if (ActivationContextCach.TryGetValue(type, out ActivationContext result))
             {
                 return result;
             }
@@ -73,12 +71,26 @@ namespace Remute
 
         private static ConstructorInfo FindConstructor(Type type)
         {
-            return type.GetTypeInfo().DeclaredConstructors.FirstOrDefault();
+            var constructors = type.GetTypeInfo().DeclaredConstructors;
+
+            if (constructors.Count() != 1)
+            {
+                throw new Exception($"Unable to find appropriate constructor of type '{type.Name}'.");
+            }
+
+            return constructors.Single();
         }
 
-        private static PropertyInfo FindProperty(ParameterInfo parameter, PropertyInfo[] properties)
+        private static PropertyInfo FindProperty(Type type, ParameterInfo parameter, PropertyInfo[] properties)
         {
-            return properties.FirstOrDefault(x => string.Equals(x.Name, parameter.Name, StringComparison.OrdinalIgnoreCase));
+            properties = properties.Where(x => string.Equals(x.Name, parameter.Name, StringComparison.OrdinalIgnoreCase)).ToArray();
+
+            if (properties.Count() != 1)
+            {
+                throw new Exception($"Unable to find appropriate property to use as a constructor parameter '{parameter.Name}'. Type '{type.Name}'.");
+            }
+
+            return properties.Single();
         }
 
         private static Activator GetActivator(ConstructorInfo constructor)
@@ -113,7 +125,7 @@ namespace Remute
             for (var i = 0; i < parameters.Length; i++)
             {
                 var parameter = parameters[i];
-                var property = FindProperty(parameter, properties);
+                var property = FindProperty(type, parameter, properties);
 
                 var expressionParameter = Expression.Parameter(typeof(object));
                 var expressionParameterConvert = Expression.Convert(expressionParameter, type);

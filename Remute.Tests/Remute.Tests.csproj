@@ -56,6 +56,8 @@
   <ItemGroup>
     <Compile Include="Model\Department.cs" />
     <Compile Include="Model\Employee.cs" />
+    <Compile Include="Model\InvalidMultipleConstructor.cs" />
+    <Compile Include="Model\InvalidProperty.cs" />
     <Compile Include="Model\Organization.cs" />
     <Compile Include="RemuteTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
