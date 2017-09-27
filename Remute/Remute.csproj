@@ -1,15 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard1.4</TargetFramework>
+    <TargetFrameworks>netstandard1.4;net45</TargetFrameworks>
     <Authors>Alexey Babik</Authors>
     <Company />
-    <Description>.NET tool to produce new immutable instances using lambda expressios</Description>
+    <Description>.NET tool to produce new immutable object applying lambda expressions to existing immutable object</Description>
     <Copyright>Copyright © Alexey Babik 2017</Copyright>
     <PackageProjectUrl>https://github.com/ababik/Remute</PackageProjectUrl>
     <RepositoryUrl>https://github.com/ababik/Remute</RepositoryUrl>
     <PackageTags>immutable lambda expression</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
 </Project>
