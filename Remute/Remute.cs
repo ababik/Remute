@@ -130,7 +130,8 @@ namespace Remute
                 var expressionParameter = Expression.Parameter(typeof(object));
                 var expressionParameterConvert = Expression.Convert(expressionParameter, type);
                 var expressionProperty = Expression.Property(expressionParameterConvert, property);
-                var lambda = Expression.Lambda<Func<object, object>>(expressionProperty, expressionParameter);
+                var expressionPropertyConvert = Expression.Convert(expressionProperty, typeof(object));
+                var lambda = Expression.Lambda<Func<object, object>>(expressionPropertyConvert, expressionParameter);
                 var resolver = lambda.Compile();
 
                 var parameterResolver = new ParameterResolver(parameter, property, resolver);

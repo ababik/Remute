@@ -31,7 +31,7 @@ namespace Remute.Tests
             var organization = new Organization("organization 1", new Department("department 1", null, null));
             var remute = new Remute();
             var actual = remute.With(organization, x => x.Name, "organization 2");
-            Assert.AreEqual(actual.Name, "organization 2");
+            Assert.AreEqual("organization 2", actual.Name);
             Assert.AreNotSame(organization, actual);
             Assert.AreSame(organization.DevelopmentDepartment, actual.DevelopmentDepartment);
         }
@@ -39,15 +39,30 @@ namespace Remute.Tests
         [TestMethod]
         public void SetNestedPropery_Success()
         {
-            var organization = new Organization("organization 1", new Department("department 1", new Employee("developer", "manager"), null));
+            var organization = new Organization("organization 1", new Department("department 1", new Employee(Guid.NewGuid(), "developer", "manager"), null));
             var remute = new Remute();
             var actual = remute.With(organization, x => x.DevelopmentDepartment.Manager.FirstName, "name");
-            Assert.AreEqual(actual.DevelopmentDepartment.Manager.FirstName, "name");
+            Assert.AreEqual("name", actual.DevelopmentDepartment.Manager.FirstName);
+            Assert.AreEqual(organization.DevelopmentDepartment.Manager.Id, actual.DevelopmentDepartment.Manager.Id);
             Assert.AreNotSame(organization, actual);
             Assert.AreNotSame(organization.DevelopmentDepartment, actual.DevelopmentDepartment);
             Assert.AreNotSame(organization.DevelopmentDepartment.Manager, actual.DevelopmentDepartment.Manager);
             Assert.AreSame(organization.Name, actual.Name);
             Assert.AreSame(organization.DevelopmentDepartment.Title, organization.DevelopmentDepartment.Title);
+        }
+
+        [TestMethod]
+        public void SetValueTypePropery_Success()
+        {
+            var employeeId = Guid.NewGuid();
+            var employee = new Employee(Guid.NewGuid(), "Joe", "Doe");
+            var remute = new Remute();
+            var actual = remute.With(employee, x => x.Id, employeeId);
+            Assert.AreEqual(employeeId, actual.Id);
+            Assert.AreEqual("Joe", actual.FirstName);
+            Assert.AreEqual("Doe", actual.LastName);
+            Assert.AreSame(employee.FirstName, actual.FirstName);
+            Assert.AreSame(employee.LastName, actual.LastName);
         }
 
         [TestMethod]
