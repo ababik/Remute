@@ -8,11 +8,11 @@ namespace Remute
 {
     public class Remute
     {
-        internal Dictionary<Type, ActivationContext> ActivationContextCach { get; }
+        internal Dictionary<Type, ActivationContext> ActivationContextCache { get; }
 
         public Remute()
         {
-            ActivationContextCach = new Dictionary<Type, ActivationContext>();
+            ActivationContextCache = new Dictionary<Type, ActivationContext>();
         }
 
         public TInstance With<TInstance, TValue>(TInstance instance, Expression<Func<TInstance, TValue>> expression, TValue value)
@@ -54,7 +54,7 @@ namespace Remute
 
         private ActivationContext GetActivationContext(Type type)
         {
-            if (ActivationContextCach.TryGetValue(type, out ActivationContext result))
+            if (ActivationContextCache.TryGetValue(type, out ActivationContext result))
             {
                 return result;
             }
@@ -64,7 +64,7 @@ namespace Remute
             var parameterResolvers = GetParameterResolvers(type, constructor);
 
             result = new ActivationContext(type, activator, parameterResolvers);
-            ActivationContextCach[type] = result;
+            ActivationContextCache[type] = result;
 
             return result;
         }
