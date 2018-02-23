@@ -1,6 +1,9 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Remute.Tests.Model;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
 namespace Remute.Tests
 {
@@ -74,9 +77,12 @@ namespace Remute.Tests
             {
                 invalid = remute.With(invalid, x => x.Property1, "test");
             }
-            catch (Exception ex) when (ex.Message == $"Unable to find appropriate constructor of type '{nameof(InvalidMultipleConstructor)}'.")
+            catch (Exception ex) when (ex.Message == $"Unable to find appropriate constructor of type '{nameof(InvalidMultipleConstructor)}'. Consider to use {nameof(ActivationConfiguration)} parameter.")
             {
+                return;
             }
+
+            Assert.Fail();
         }
 
         [TestMethod]
@@ -88,9 +94,12 @@ namespace Remute.Tests
             {
                 invalid = remute.With(invalid, x => x.Property1, "test");
             }
-            catch (Exception ex) when (ex.Message == $"Unable to find appropriate property to use as a constructor parameter 'property'. Type '{nameof(InvalidProperty)}'.")
+            catch (Exception ex) when (ex.Message == $"Unable to find appropriate property to use as a constructor parameter 'property'. Type '{nameof(InvalidProperty)}'. Consider to use {nameof(ActivationConfiguration)} parameter.")
             {
+                return;
             }
+
+            Assert.Fail();
         }
     }
 }

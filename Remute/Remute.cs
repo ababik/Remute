@@ -8,10 +8,17 @@ namespace Remute
 {
     public class Remute
     {
-        internal Dictionary<Type, ActivationContext> ActivationContextCache { get; }
+        private ActivationConfiguration ActivationConfiguration { get; }
+        private Dictionary<Type, ActivationContext> ActivationContextCache { get; }
 
         public Remute()
+            : this(new ActivationConfiguration())
         {
+        }
+
+        public Remute(ActivationConfiguration activationConfiguration)
+        {
+            ActivationConfiguration = activationConfiguration;
             ActivationContextCache = new Dictionary<Type, ActivationContext>();
         }
 
@@ -69,31 +76,44 @@ namespace Remute
             return result;
         }
 
-        private static ConstructorInfo FindConstructor(Type type)
+        private ConstructorInfo FindConstructor(Type type)
         {
+            if (ActivationConfiguration.Settings.TryGetValue(type, out ActivationSetting setting))
+            {
+                return setting.Constructor;
+            }
+
             var constructors = type.GetTypeInfo().DeclaredConstructors;
 
             if (constructors.Count() != 1)
             {
-                throw new Exception($"Unable to find appropriate constructor of type '{type.Name}'.");
+                throw new Exception($"Unable to find appropriate constructor of type '{type.Name}'. Consider to use {nameof(ActivationConfiguration)} parameter.");
             }
 
             return constructors.Single();
         }
 
-        private static PropertyInfo FindProperty(Type type, ParameterInfo parameter, PropertyInfo[] properties)
+        private PropertyInfo FindProperty(Type type, ParameterInfo parameter, PropertyInfo[] properties)
         {
+            if (ActivationConfiguration.Settings.TryGetValue(type, out ActivationSetting setting))
+            {
+                if (setting.Parameters.TryGetValue(parameter, out PropertyInfo property))
+                {
+                    return property;
+                }
+            }
+
             properties = properties.Where(x => string.Equals(x.Name, parameter.Name, StringComparison.OrdinalIgnoreCase)).ToArray();
 
             if (properties.Count() != 1)
             {
-                throw new Exception($"Unable to find appropriate property to use as a constructor parameter '{parameter.Name}'. Type '{type.Name}'.");
+                throw new Exception($"Unable to find appropriate property to use as a constructor parameter '{parameter.Name}'. Type '{type.Name}'. Consider to use {nameof(ActivationConfiguration)} parameter.");
             }
 
             return properties.Single();
         }
 
-        private static Activator GetActivator(ConstructorInfo constructor)
+        private Activator GetActivator(ConstructorInfo constructor)
         {
             var parameters = constructor.GetParameters();
 
@@ -115,7 +135,7 @@ namespace Remute
             return compiledExpression;
         }
 
-        private static ParameterResolver[] GetParameterResolvers(Type type, ConstructorInfo constructor)
+        private ParameterResolver[] GetParameterResolvers(Type type, ConstructorInfo constructor)
         {
             var properties = type.GetTypeInfo().DeclaredProperties.ToArray();
             var parameters = constructor.GetParameters();
@@ -141,7 +161,7 @@ namespace Remute
             return parameterResolvers;
         }
 
-        private static object[] ResolveActivatorArguments(ParameterResolver[] parameterResolvers, PropertyInfo property, object instance, ref object result)
+        private object[] ResolveActivatorArguments(ParameterResolver[] parameterResolvers, PropertyInfo property, object instance, ref object result)
         {
             var arguments = new object[parameterResolvers.Length];
 

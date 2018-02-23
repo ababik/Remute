@@ -13,4 +13,8 @@
     <Version>1.0.1</Version>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Include="ActivationConfiguration.cs" />
+  </ItemGroup>
+
 </Project>
