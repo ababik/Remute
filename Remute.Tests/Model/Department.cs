@@ -1,6 +1,6 @@
 ﻿using System.Collections.Immutable;
 
-namespace Remute.Tests.Model
+namespace Remutable.Tests.Model
 {
     internal class Department
     {

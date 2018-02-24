@@ -1,11 +1,11 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Remute.Tests.Model;
+using Remutable.Tests.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace Remute.Tests
+namespace Remutable.Tests
 {
     [TestClass]
     public class ActivationConfigurationTests

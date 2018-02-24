@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Remute
+namespace Remutable
 {
     internal delegate object Activator(params object[] args);
 

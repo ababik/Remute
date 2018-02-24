@@ -1,4 +1,4 @@
-﻿namespace Remute.Tests.Model
+﻿namespace Remutable.Tests.Model
 {
     public class InvalidMultipleConstructor
     {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Remute.Tests.Model
+namespace Remutable.Tests.Model
 {
     internal class Employee
     {

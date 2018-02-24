@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 
-namespace Remute
+namespace Remutable
 {
     internal class ParameterResolver
     {

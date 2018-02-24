@@ -4,10 +4,13 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace Remute
+namespace Remutable
 {
     public class Remute
     {
+        private static readonly Remute _default = new Remute();
+        public static Remute Default => _default;
+
         private ActivationConfiguration ActivationConfiguration { get; }
         private Dictionary<Type, ActivationContext> ActivationContextCache { get; }
 
