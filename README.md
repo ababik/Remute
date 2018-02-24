@@ -86,6 +86,17 @@ Assert.AreSame(expected.Name, actual.Name);
 Assert.AreSame(expected.DevelopmentDepartment.Title, expected.DevelopmentDepartment.Title);
 ```
 
+## Multiple constuctors and parameter names matching
+By default Remute expects immutable type to have single constructor with parameters matching property names (case-insensetive).
+Use `ActivationConfiguration` to change this default behaviour. Check [issue](https://github.com/ababik/Remute/issues/3) for more details.
+
+```cs
+var config = new ActivationConfiguration()
+    .Configure<User>(x => new User(x.FirstName, x.LastName));
+
+var remute = new Remute(config);
+```
+
 ## Performance notes
 Remute does not use reflection / Activator.CreateInstance for object creation. Instead cached lambda expressions are used that demonstrates great performance.
 
