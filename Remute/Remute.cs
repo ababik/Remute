@@ -8,8 +8,8 @@ namespace Remutable
 {
     public class Remute
     {
-        private static readonly Remute _default = new Remute();
-        public static Remute Default => _default;
+        private static readonly Remute @default = new Remute();
+        public static Remute Default => @default;
 
         private ActivationConfiguration ActivationConfiguration { get; }
         private Dictionary<Type, ActivationContext> ActivationContextCache { get; }
