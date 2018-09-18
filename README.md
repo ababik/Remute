@@ -98,7 +98,7 @@ var remute = new Remute(config);
 ```
 
 ## Syntax sugar
-There is an extension method enabling chained modifications.
+There is an extension method enabling chained modifications on any object.
 ```cs
 using Remutable.Extensions;
 ...
