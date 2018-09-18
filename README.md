@@ -97,6 +97,21 @@ var config = new ActivationConfiguration()
 var remute = new Remute(config);
 ```
 
+## Syntax sugar
+There is an extension method enabling chained modifications.
+```cs
+using Remutable.Extensions;
+...
+var employee = new Employee(Guid.NewGuid(), "Joe", "Doe");
+
+var actual = employee
+    .Remute(x => x.FirstName, "Foo")
+    .Remute(x => x.LastName, "Bar");
+
+Assert.AreEqual("Foo", actual.FirstName);
+Assert.AreEqual("Bar", actual.LastName);
+```
+
 ## Performance notes
 Remute does not use reflection / Activator.CreateInstance for object creation. Instead cached lambda expressions are used that demonstrates great performance.
 
