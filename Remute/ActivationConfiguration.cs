@@ -31,7 +31,7 @@ namespace Remutable
         {
             var constructorExpression = expression.Body as NewExpression;
 
-            if (constructorExpression == null)
+            if (constructorExpression is null)
             {
                 throw new Exception($"Expression must specify constructor of '{typeof(T)}'.");
             }

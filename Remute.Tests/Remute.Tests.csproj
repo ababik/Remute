@@ -55,6 +55,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="ActivationConfigurationTests.cs" />
+    <Compile Include="ExtensionMethodTests.cs" />
     <Compile Include="Model\Department.cs" />
     <Compile Include="Model\Employee.cs" />
     <Compile Include="Model\InvalidMultipleConstructor.cs" />

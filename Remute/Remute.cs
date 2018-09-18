@@ -8,8 +8,7 @@ namespace Remutable
 {
     public class Remute
     {
-        private static readonly Remute @default = new Remute();
-        public static Remute Default => @default;
+        public static Remute Default { get; } = new Remute();
 
         private ActivationConfiguration ActivationConfiguration { get; }
         private Dictionary<Type, ActivationContext> ActivationContextCache { get; }
@@ -32,7 +31,7 @@ namespace Remutable
                 throw new ArgumentNullException(nameof(instance));
             }
 
-            if (expression == null)
+            if (expression is null)
             {
                 throw new ArgumentNullException(nameof(expression));
             }
