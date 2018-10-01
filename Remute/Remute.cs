@@ -20,7 +20,7 @@ namespace Remutable
 
         public Remute(ActivationConfiguration activationConfiguration)
         {
-            ActivationConfiguration = activationConfiguration;
+            ActivationConfiguration = activationConfiguration ?? throw new ArgumentNullException(nameof(activationConfiguration));
             ActivationContextCache = new Dictionary<Type, ActivationContext>();
         }
 
@@ -31,7 +31,7 @@ namespace Remutable
                 throw new ArgumentNullException(nameof(instance));
             }
 
-            if (expression is null)
+            if (expression == null)
             {
                 throw new ArgumentNullException(nameof(expression));
             }
@@ -40,17 +40,17 @@ namespace Remutable
 
             var instanceExpression = expression.Body;
 
-            while (instanceExpression is MemberExpression)
+            while (instanceExpression is MemberExpression propertyExpression)
             {
-                var propertyExpression = instanceExpression as MemberExpression;
                 instanceExpression = propertyExpression.Expression;
+                var instanceExpressionConvert = Expression.Convert(instanceExpression, typeof(object));
 
                 var property = propertyExpression.Member as PropertyInfo;
                 var type = property.DeclaringType;
 
                 var activationContext = GetActivationContext(type);
 
-                var lambdaExpression = Expression.Lambda<Func<TInstance, object>>(instanceExpression, expression.Parameters);
+                var lambdaExpression = Expression.Lambda<Func<TInstance, object>>(instanceExpressionConvert, expression.Parameters);
                 var compiledExpression = lambdaExpression.Compile();
                 var currentInstance = compiledExpression.Invoke(instance);
 
@@ -63,7 +63,7 @@ namespace Remutable
 
         private ActivationContext GetActivationContext(Type type)
         {
-            if (ActivationContextCache.TryGetValue(type, out ActivationContext result))
+            if (ActivationContextCache.TryGetValue(type, out var result))
             {
                 return result;
             }
@@ -132,7 +132,8 @@ namespace Remutable
             }
 
             var constructorExpression = Expression.New(constructor, argumentExpressions);
-            var lambdaExpression = Expression.Lambda<Activator>(constructorExpression, parameterExpression);
+            var constructorExpressionConvert = Expression.Convert(constructorExpression, typeof(object));
+            var lambdaExpression = Expression.Lambda<Activator>(constructorExpressionConvert, parameterExpression);
             var compiledExpression = lambdaExpression.Compile();
             return compiledExpression;
         }
