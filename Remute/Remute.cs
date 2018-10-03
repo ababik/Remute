@@ -80,7 +80,7 @@ namespace Remutable
 
         private ConstructorInfo FindConstructor(Type type)
         {
-            if (ActivationConfiguration.Settings.TryGetValue(type, out ActivationSetting setting))
+            if (ActivationConfiguration.Settings.TryGetValue(type, out var setting))
             {
                 return setting.Constructor;
             }
@@ -97,9 +97,9 @@ namespace Remutable
 
         private PropertyInfo FindProperty(Type type, ParameterInfo parameter, PropertyInfo[] properties)
         {
-            if (ActivationConfiguration.Settings.TryGetValue(type, out ActivationSetting setting))
+            if (ActivationConfiguration.Settings.TryGetValue(type, out var setting))
             {
-                if (setting.Parameters.TryGetValue(parameter, out PropertyInfo property))
+                if (setting.Parameters.TryGetValue(parameter, out var property))
                 {
                     return property;
                 }
@@ -167,6 +167,7 @@ namespace Remutable
         private object[] ResolveActivatorArguments(ParameterResolver[] parameterResolvers, PropertyInfo property, object instance, ref object result)
         {
             var arguments = new object[parameterResolvers.Length];
+            var match = false;
 
             for (var i = 0; i < parameterResolvers.Length; i++)
             {
@@ -177,6 +178,7 @@ namespace Remutable
                 {
                     argument = result;
                     result = instance;
+                    match = true;
                 }
                 else
                 {
@@ -184,6 +186,11 @@ namespace Remutable
                 }
 
                 arguments[i] = argument;
+            }
+
+            if (match == false)
+            {
+                throw new Exception($"Unable to construct object of type '{property.DeclaringType.Name}'. There is no constructor parameter matching property '{property.Name}'.");
             }
 
             return arguments;
