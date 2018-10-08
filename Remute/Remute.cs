@@ -6,24 +6,52 @@ using System.Reflection;
 
 namespace Remutable
 {
+    /// <summary>
+    /// Contructs immutable objects mapping existing object properties to constructor parameters.
+    /// Helpful working with types without parameterless contructor.
+    /// </summary>
     public class Remute
     {
+        /// <summary>
+        /// Remute default instance.
+        /// Expects immutable type to have single constructor with parameters matching property names (case-insensetive). 
+        /// Use <see cref="ActivationConfiguration"/> to change this default behaviour.
+        /// </summary>
         public static Remute Default { get; } = new Remute();
 
         private ActivationConfiguration ActivationConfiguration { get; }
-        private Dictionary<Type, ActivationContext> ActivationContextCache { get; }
+        private Dictionary<Guid, ActivationContext> ActivationContextCache { get; }
 
+        /// <summary>
+        /// Creates Remute instance.
+        /// By default expects immutable type to have single constructor with parameters matching property names (case-insensetive). 
+        /// Use overloaded constructor with <see cref="ActivationConfiguration"/> to change this default behaviour.
+        /// </summary>
         public Remute()
             : this(new ActivationConfiguration())
         {
         }
 
+        /// <summary>
+        /// Creates Remute instance.
+        /// Configuring which constructor to use (if there are multiple) and how to map property to parameter names (if names do not match).
+        /// </summary>
+        /// <param name="activationConfiguration">Immutable object creation configurations.</param>
         public Remute(ActivationConfiguration activationConfiguration)
         {
             ActivationConfiguration = activationConfiguration ?? throw new ArgumentNullException(nameof(activationConfiguration));
-            ActivationContextCache = new Dictionary<Type, ActivationContext>();
+            ActivationContextCache = new Dictionary<Guid, ActivationContext>();
         }
 
+        /// <summary>
+        /// Contructs immutable object from existing one with changed property specified by lambda expression.
+        /// </summary>
+        /// <typeparam name="TInstance">Immutable object type.</typeparam>
+        /// <typeparam name="TValue">Value to set type.</typeparam>
+        /// <param name="instance">Original immutable object.</param>
+        /// <param name="expression">Navigation property specifying what to change.</param>
+        /// <param name="value">Value to set in the resulting object.</param>
+        /// <returns>Immutable object with changed property.</returns>
         public TInstance With<TInstance, TValue>(TInstance instance, Expression<Func<TInstance, TValue>> expression, TValue value)
         {
             if (instance == null)
@@ -43,14 +71,14 @@ namespace Remutable
             while (instanceExpression is MemberExpression propertyExpression)
             {
                 instanceExpression = propertyExpression.Expression;
-                var instanceExpressionConvert = Expression.Convert(instanceExpression, typeof(object));
+                var instanceConvertExpression = Expression.Convert(instanceExpression, typeof(object));
 
                 var property = propertyExpression.Member as PropertyInfo;
                 var type = property.DeclaringType;
 
-                var activationContext = GetActivationContext(type);
+                var activationContext = GetActivationContext(type, type);
 
-                var lambdaExpression = Expression.Lambda<Func<TInstance, object>>(instanceExpressionConvert, expression.Parameters);
+                var lambdaExpression = Expression.Lambda<Func<TInstance, object>>(instanceConvertExpression, expression.Parameters);
                 var compiledExpression = lambdaExpression.Compile();
                 var currentInstance = compiledExpression.Invoke(instance);
 
@@ -61,19 +89,47 @@ namespace Remutable
             return (TInstance)result;
         }
 
-        private ActivationContext GetActivationContext(Type type)
+        /// <summary>
+        /// Constructs immutable object from any other object. 
+        /// Helpful cloning immutable object or converting POCO, DTO, anonymous type, dynamic ect.
+        /// </summary>
+        /// <typeparam name="TInstance">Immutable object type.</typeparam>
+        /// <param name="source">Original object.</param>
+        /// <returns>Immutable object.</returns>
+        public TInstance With<TInstance>(object source)
         {
-            if (ActivationContextCache.TryGetValue(type, out var result))
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+
+            var sourceType = source.GetType();
+            var targetType = typeof(TInstance);
+            
+            var activationContext = GetActivationContext(sourceType, targetType);
+
+            var result = default(object);
+            var arguments = ResolveActivatorArguments(activationContext.ParameterResolvers, null, source, ref result);
+            result = activationContext.Activator.Invoke(arguments);
+
+            return (TInstance)result;
+        }
+
+        private ActivationContext GetActivationContext(Type source, Type target)
+        {
+            var key = GetActivationContextCacheKey(source, target);
+
+            if (ActivationContextCache.TryGetValue(key, out var result))
             {
                 return result;
             }
 
-            var constructor = FindConstructor(type);
+            var constructor = FindConstructor(target);
             var activator = GetActivator(constructor);
-            var parameterResolvers = GetParameterResolvers(type, constructor);
+            var parameterResolvers = GetParameterResolvers(source, constructor);
 
-            result = new ActivationContext(type, activator, parameterResolvers);
-            ActivationContextCache[type] = result;
+            result = new ActivationContext(activator, parameterResolvers);
+            ActivationContextCache[key] = result;
 
             return result;
         }
@@ -127,13 +183,13 @@ namespace Remutable
                 var indexExpression = Expression.Constant(i);
                 var paramType = parameters[i].ParameterType;
                 var arrayExpression = Expression.ArrayIndex(parameterExpression, indexExpression);
-                var arrayExpressionConvert = Expression.Convert(arrayExpression, paramType);
-                argumentExpressions[i] = arrayExpressionConvert;
+                var arrayConvertExpression = Expression.Convert(arrayExpression, paramType);
+                argumentExpressions[i] = arrayConvertExpression;
             }
 
             var constructorExpression = Expression.New(constructor, argumentExpressions);
-            var constructorExpressionConvert = Expression.Convert(constructorExpression, typeof(object));
-            var lambdaExpression = Expression.Lambda<Activator>(constructorExpressionConvert, parameterExpression);
+            var constructorConvertExpression = Expression.Convert(constructorExpression, typeof(object));
+            var lambdaExpression = Expression.Lambda<Activator>(constructorConvertExpression, parameterExpression);
             var compiledExpression = lambdaExpression.Compile();
             return compiledExpression;
         }
@@ -148,16 +204,17 @@ namespace Remutable
             for (var i = 0; i < parameters.Length; i++)
             {
                 var parameter = parameters[i];
+
                 var property = FindProperty(type, parameter, properties);
 
-                var expressionParameter = Expression.Parameter(typeof(object));
-                var expressionParameterConvert = Expression.Convert(expressionParameter, type);
-                var expressionProperty = Expression.Property(expressionParameterConvert, property);
-                var expressionPropertyConvert = Expression.Convert(expressionProperty, typeof(object));
-                var lambda = Expression.Lambda<Func<object, object>>(expressionPropertyConvert, expressionParameter);
-                var resolver = lambda.Compile();
+                var parameterExpression = Expression.Parameter(typeof(object));
+                var parameterConvertExpression = Expression.Convert(parameterExpression, type);
+                var propertyExpression = Expression.Property(parameterConvertExpression, property);
+                var propertyConvertExpression = Expression.Convert(propertyExpression, typeof(object));
+                var lambdaExpression = Expression.Lambda<Func<object, object>>(propertyConvertExpression, parameterExpression);
+                var compiledExpression = lambdaExpression.Compile();
 
-                var parameterResolver = new ParameterResolver(parameter, property, resolver);
+                var parameterResolver = new ParameterResolver(parameter, property, compiledExpression);
                 parameterResolvers[i] = parameterResolver;
             }
 
@@ -188,12 +245,23 @@ namespace Remutable
                 arguments[i] = argument;
             }
 
-            if (match == false)
+            if (property != null && match == false)
             {
                 throw new Exception($"Unable to construct object of type '{property.DeclaringType.Name}'. There is no constructor parameter matching property '{property.Name}'.");
             }
 
             return arguments;
+        }
+
+        private static Guid GetActivationContextCacheKey(Type type1, Type type2)
+        {
+            var array1 = type1.GetTypeInfo().GUID.ToByteArray();
+            var array2 = type2.GetTypeInfo().GUID.ToByteArray();
+
+            var num1 = BitConverter.ToUInt64(array1, 0) ^ BitConverter.ToUInt64(array2, 8);
+            var num2 = BitConverter.ToUInt64(array1, 8) ^ BitConverter.ToUInt64(array2, 0);
+
+            return new Guid(BitConverter.GetBytes(num1).Concat(BitConverter.GetBytes(num2)).ToArray());
         }
     }
 }
