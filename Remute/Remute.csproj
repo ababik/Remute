@@ -10,9 +10,13 @@
     <RepositoryUrl>https://github.com/ababik/Remute</RepositoryUrl>
     <PackageTags>immutable lambda expression</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>1.0.7</Version>
+    <Version>1.0.8</Version>
     <RootNamespace>Remutable</RootNamespace>
-    <AssemblyVersion>1.0.7.0</AssemblyVersion>
+    <AssemblyVersion>1.0.8.0</AssemblyVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
 </Project>
