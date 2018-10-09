@@ -98,5 +98,22 @@ namespace Remutable.Tests
 
             Assert.Fail();
         }
+
+        [TestMethod]
+        public void FiledSpecified_ThrowsException()
+        {
+            var invalid = new InvalidProperty("property");
+            var remute = new Remute();
+            try
+            {
+                invalid = remute.With(invalid, x => x.Field1, "test");
+            }
+            catch (Exception ex) when (ex.Message == $"Type member '{nameof(invalid.Field1)}' is expected to be a property.")
+            {
+                return;
+            }
+
+            Assert.Fail();
+        }
     }
 }

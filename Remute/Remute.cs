@@ -73,7 +73,11 @@ namespace Remutable
                 instanceExpression = propertyExpression.Expression;
                 var instanceConvertExpression = Expression.Convert(instanceExpression, typeof(object));
 
-                var property = propertyExpression.Member as PropertyInfo;
+                if (!(propertyExpression.Member is PropertyInfo property))
+                {
+                    throw new Exception($"Type member '{propertyExpression.Member.Name}' is expected to be a property.");
+                }
+
                 var type = property.DeclaringType;
 
                 var activationContext = GetActivationContext(type, type);
