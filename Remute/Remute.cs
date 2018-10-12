@@ -19,6 +19,9 @@ namespace Remutable
         /// </summary>
         public static Remute Default { get; } = new Remute();
 
+        public delegate void EmitEventHandler(object source, object target, object value, string[] affectedProperties);
+        public event EmitEventHandler OnEmit;
+
         private ActivationConfiguration ActivationConfiguration { get; }
         private Dictionary<Guid, ActivationContext> ActivationContextCache { get; }
 
@@ -48,15 +51,15 @@ namespace Remutable
         /// </summary>
         /// <typeparam name="TInstance">Immutable object type.</typeparam>
         /// <typeparam name="TValue">Value to set type.</typeparam>
-        /// <param name="instance">Original immutable object.</param>
+        /// <param name="source">Original immutable object.</param>
         /// <param name="expression">Navigation property specifying what to change.</param>
         /// <param name="value">Value to set in the resulting object.</param>
         /// <returns>Immutable object with changed property.</returns>
-        public TInstance With<TInstance, TValue>(TInstance instance, Expression<Func<TInstance, TValue>> expression, TValue value)
+        public TInstance With<TInstance, TValue>(TInstance source, Expression<Func<TInstance, TValue>> expression, TValue value)
         {
-            if (instance == null)
+            if (source == null)
             {
-                throw new ArgumentNullException(nameof(instance));
+                throw new ArgumentNullException(nameof(source));
             }
 
             if (expression == null)
@@ -65,8 +68,9 @@ namespace Remutable
             }
 
             var result = value as object;
-
             var instanceExpression = expression.Body;
+
+            var affectedProperties = new List<string>();
 
             while (instanceExpression is MemberExpression propertyExpression)
             {
@@ -84,13 +88,20 @@ namespace Remutable
 
                 var lambdaExpression = Expression.Lambda<Func<TInstance, object>>(instanceConvertExpression, expression.Parameters);
                 var compiledExpression = lambdaExpression.Compile();
-                var currentInstance = compiledExpression.Invoke(instance);
+                var currentInstance = compiledExpression.Invoke(source);
 
                 var arguments = ResolveActivatorArguments(activationContext.ParameterResolvers, property, currentInstance, ref result);
                 result = activationContext.Activator.Invoke(arguments);
+
+                affectedProperties.Add(property.Name);
             }
 
-            return (TInstance)result;
+            var target = (TInstance)result;
+
+            affectedProperties.Reverse();
+            OnEmit?.Invoke(source, target, value, affectedProperties.ToArray());
+
+            return target;
         }
 
         /// <summary>
@@ -109,14 +120,18 @@ namespace Remutable
 
             var sourceType = source.GetType();
             var targetType = typeof(TInstance);
-            
+
             var activationContext = GetActivationContext(sourceType, targetType);
 
             var result = default(object);
             var arguments = ResolveActivatorArguments(activationContext.ParameterResolvers, null, source, ref result);
             result = activationContext.Activator.Invoke(arguments);
 
-            return (TInstance)result;
+            var target = (TInstance)result;
+
+            OnEmit?.Invoke(source, target, null, null);
+
+            return target;
         }
 
         private ActivationContext GetActivationContext(Type source, Type target)
