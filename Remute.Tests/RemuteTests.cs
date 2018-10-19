@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Remutable.Tests.Model;
 using System;
+using System.Linq.Expressions;
 
 namespace Remutable.Tests
 {

@@ -8,6 +8,7 @@ namespace Remutable
     internal class ActivationSetting
     {
         public ConstructorInfo Constructor { get; }
+        
         public Dictionary<ParameterInfo, PropertyInfo> Parameters { get; }
 
         public ActivationSetting(ConstructorInfo constructor, Dictionary<ParameterInfo, PropertyInfo> parameters)

@@ -23,7 +23,8 @@ namespace Remutable
         public event EmitEventHandler OnEmit;
 
         private ActivationConfiguration ActivationConfiguration { get; }
-        private Dictionary<Guid, ActivationContext> ActivationContextCache { get; }
+        private Dictionary<ActivationContextCacheKey, ActivationContext> ActivationContextCache { get; }
+        private Dictionary<PropertyDelegateCacheKey, Delegate> PropertyDelegateCache { get; }
 
         /// <summary>
         /// Creates Remute instance.
@@ -43,7 +44,8 @@ namespace Remutable
         public Remute(ActivationConfiguration activationConfiguration)
         {
             ActivationConfiguration = activationConfiguration ?? throw new ArgumentNullException(nameof(activationConfiguration));
-            ActivationContextCache = new Dictionary<Guid, ActivationContext>();
+            ActivationContextCache = new Dictionary<ActivationContextCacheKey, ActivationContext>();
+            PropertyDelegateCache = new Dictionary<PropertyDelegateCacheKey, Delegate>();
         }
 
         /// <summary>
@@ -68,6 +70,7 @@ namespace Remutable
             }
 
             var result = value as object;
+            var parameterExpression = expression.Parameters.Single();
             var instanceExpression = expression.Body;
 
             var affectedProperties = new List<string>();
@@ -75,22 +78,18 @@ namespace Remutable
             while (instanceExpression is MemberExpression propertyExpression)
             {
                 instanceExpression = propertyExpression.Expression;
-                var instanceConvertExpression = Expression.Convert(instanceExpression, typeof(object));
 
-                if (!(propertyExpression.Member is PropertyInfo property))
+                var property = propertyExpression.Member as PropertyInfo;
+
+                if (property == null)
                 {
                     throw new Exception($"Type member '{propertyExpression.Member.Name}' is expected to be a property.");
                 }
 
                 var type = property.DeclaringType;
-
                 var activationContext = GetActivationContext(type, type);
-
-                var lambdaExpression = Expression.Lambda<Func<TInstance, object>>(instanceConvertExpression, expression.Parameters);
-                var compiledExpression = lambdaExpression.Compile();
-                var currentInstance = compiledExpression.Invoke(source);
-
-                var arguments = ResolveActivatorArguments(activationContext.ParameterResolvers, property, currentInstance, ref result);
+                var instance = ResolveInstance(source, parameterExpression, propertyExpression);
+                var arguments = ResolveActivatorArguments(activationContext.ParameterResolvers, property, instance, ref result);
                 result = activationContext.Activator.Invoke(arguments);
 
                 affectedProperties.Add(property.Name);
@@ -133,10 +132,10 @@ namespace Remutable
 
             return target;
         }
-
+        
         private ActivationContext GetActivationContext(Type source, Type target)
         {
-            var key = GetActivationContextCacheKey(source, target);
+            var key = new ActivationContextCacheKey(source, target);
 
             if (ActivationContextCache.TryGetValue(key, out var result))
             {
@@ -240,6 +239,26 @@ namespace Remutable
             return parameterResolvers;
         }
 
+        private object ResolveInstance<TInstance>(TInstance source, ParameterExpression parameterExpression, MemberExpression memberExpression)
+        {
+            var key = new PropertyDelegateCacheKey(typeof(TInstance), memberExpression);
+            var compiledExpression = default(Func<TInstance, object>);
+
+            if (PropertyDelegateCache.TryGetValue(key, out var propertyDelegate))
+            {
+                compiledExpression = (Func<TInstance, object>)propertyDelegate;
+            }
+            else
+            {
+                var instanceConvertExpression = Expression.Convert(memberExpression.Expression, typeof(object));
+                var lambdaExpression = Expression.Lambda<Func<TInstance, object>>(instanceConvertExpression, parameterExpression);
+                compiledExpression = lambdaExpression.Compile();
+                PropertyDelegateCache[key] = compiledExpression;
+            }
+            
+            return compiledExpression.Invoke(source);
+        }
+        
         private object[] ResolveActivatorArguments(ParameterResolver[] parameterResolvers, PropertyInfo property, object instance, ref object result)
         {
             var arguments = new object[parameterResolvers.Length];
@@ -270,17 +289,6 @@ namespace Remutable
             }
 
             return arguments;
-        }
-
-        private static Guid GetActivationContextCacheKey(Type type1, Type type2)
-        {
-            var array1 = type1.GetTypeInfo().GUID.ToByteArray();
-            var array2 = type2.GetTypeInfo().GUID.ToByteArray();
-
-            var num1 = BitConverter.ToUInt64(array1, 0) ^ BitConverter.ToUInt64(array2, 8);
-            var num2 = BitConverter.ToUInt64(array1, 8) ^ BitConverter.ToUInt64(array2, 0);
-
-            return new Guid(BitConverter.GetBytes(num1).Concat(BitConverter.GetBytes(num2)).ToArray());
         }
     }
 }
