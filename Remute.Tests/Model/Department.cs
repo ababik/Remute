@@ -8,9 +8,9 @@ namespace Remutable.Tests.Model
 
         public Employee Manager { get; }
 
-        public ImmutableList<Employee> Employees { get; }
+        public Employee[] Employees { get; }
 
-        public Department(string title, Employee manager, ImmutableList<Employee> employees)
+        public Department(string title, Employee manager, Employee[] employees)
         {
             Title = title;
             Manager = manager;

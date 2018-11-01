@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 
 namespace Remutable
 {
-    internal class PropertyDelegateCacheKey
+    internal class InstanceExpressionCacheKey
     {
         private Type Type { get; }
 
@@ -12,11 +12,11 @@ namespace Remutable
 
         private int HashCode { get; }
 
-        public PropertyDelegateCacheKey(Type type, MemberExpression memberExpression)
+        public InstanceExpressionCacheKey(Type type, Expression expression)
         {
             Type = type;
 
-            var value = memberExpression.ToString();
+            var value = expression.ToString();
             var index = value.IndexOf(Type.Delimiter);
 
             try
@@ -25,15 +25,17 @@ namespace Remutable
             }
             catch (Exception ex)
             {
-                throw new Exception($"Unable to parse expression '{memberExpression}'. Property expression is expected.", ex);
+                throw new Exception($"Unable to parse expression '{expression}'.", ex);
             }
 
-            HashCode = Type.GetHashCode() ^ Value.GetHashCode();
+            HashCode = Type == null 
+                ? Value.GetHashCode() 
+                : Type.GetHashCode() ^ Value.GetHashCode();
         }
 
         public override bool Equals(object instance)
         {
-            return (instance is PropertyDelegateCacheKey that) && (that.Type == this.Type) && (that.Value == this.Value);
+            return (instance is InstanceExpressionCacheKey that) && (that.Type == this.Type) && (that.Value == this.Value);
         }
 
         public override int GetHashCode()

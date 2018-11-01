@@ -105,11 +105,12 @@ namespace Remutable.Tests
         {
             var invalid = new InvalidProperty("property");
             var remute = new Remute();
+
             try
             {
                 invalid = remute.With(invalid, x => x.Field1, "test");
             }
-            catch (Exception ex) when (ex.Message == $"Type member '{nameof(invalid.Field1)}' is expected to be a property.")
+            catch (NotSupportedException ex) when (ex.Message == $"Unable to process expression. Expression: 'x.Field1'.")
             {
                 return;
             }
