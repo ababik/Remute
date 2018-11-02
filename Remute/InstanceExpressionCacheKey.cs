@@ -14,6 +14,11 @@ namespace Remutable
 
         public InstanceExpressionCacheKey(Type type, Expression expression)
         {
+            if (type == null)
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
+
             Type = type;
 
             var value = expression.ToString();
@@ -28,9 +33,7 @@ namespace Remutable
                 throw new Exception($"Unable to parse expression '{expression}'.", ex);
             }
 
-            HashCode = Type == null 
-                ? Value.GetHashCode() 
-                : Type.GetHashCode() ^ Value.GetHashCode();
+            HashCode = Type.GetHashCode() ^ Value.GetHashCode();
         }
 
         public override bool Equals(object instance)

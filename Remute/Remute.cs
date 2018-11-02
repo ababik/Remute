@@ -30,7 +30,6 @@ namespace Remutable
         private Dictionary<ActivationContextCacheKey, ActivationContext> ActivationContextCache { get; }
         private Dictionary<InstanceExpressionCacheKey, Delegate> ResolveInstanceExpressionCache { get; }
         private Dictionary<InstanceExpressionCacheKey, Delegate> AssignIndexExpressionCache { get; }
-        private Dictionary<InstanceExpressionCacheKey, ResolveIndexParameterDelegate> ResolveIndexParameterExpressionCache { get; }
 
         /// <summary>
         /// Creates Remute instance.
@@ -53,7 +52,6 @@ namespace Remutable
             ActivationContextCache = new Dictionary<ActivationContextCacheKey, ActivationContext>();
             ResolveInstanceExpressionCache = new Dictionary<InstanceExpressionCacheKey, Delegate>();
             AssignIndexExpressionCache = new Dictionary<InstanceExpressionCacheKey, Delegate>();
-            ResolveIndexParameterExpressionCache = new Dictionary<InstanceExpressionCacheKey, ResolveIndexParameterDelegate>();
         }
 
         /// <summary>
@@ -367,17 +365,9 @@ namespace Remutable
 
         private int ResolveIndexParameter(Expression expression)
         {
-            var key = new InstanceExpressionCacheKey(null, expression);
-
-            if (ResolveIndexParameterExpressionCache.TryGetValue(key, out var resolveIndexParameterDelegate) == false)
-            {
-                var lambdaExpression = Expression.Lambda<ResolveIndexParameterDelegate>(expression);
-                resolveIndexParameterDelegate = lambdaExpression.Compile();
-                ResolveIndexParameterExpressionCache[key] = resolveIndexParameterDelegate;
-            }
-
+            var lambdaExpression = Expression.Lambda<ResolveIndexParameterDelegate>(expression);
+            var resolveIndexParameterDelegate = lambdaExpression.Compile();
             var result = resolveIndexParameterDelegate.Invoke();
-
             return result;
         }
 
@@ -396,6 +386,7 @@ namespace Remutable
                         expression = memberExpression.Expression;
                         properties.Add(property);
                         indexes.Add(null);
+
                         continue;
                     }
                 }
@@ -405,25 +396,22 @@ namespace Remutable
                         binaryExpression.Left is MemberExpression memberExpression &&
                         memberExpression.Member is PropertyInfo property)
                     {
-                        var constantExpression = default(ConstantExpression);
                         var index = default(int?);
 
-                        if (binaryExpression.Right is ConstantExpression)
+                        if (binaryExpression.Right is ConstantExpression constantExpression)
                         {
-                            constantExpression = binaryExpression.Right as ConstantExpression;
                             index = (int)constantExpression.Value;
                         }
-                        if (binaryExpression.Right is MemberExpression fieldExpression)
+                        else
                         {
-                            index = ResolveIndexParameter(fieldExpression);
+                            index = ResolveIndexParameter(binaryExpression.Right);
                         }
-                        if (index.HasValue)
-                        {
-                            expression = memberExpression.Expression;
-                            properties.Add(property);
-                            indexes.Add(index.Value);
-                            continue;
-                        }
+
+                        expression = memberExpression.Expression;
+                        properties.Add(property);
+                        indexes.Add(index.Value);
+
+                        continue;
                     }
                 }
 
