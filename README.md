@@ -97,12 +97,6 @@ var config = new ActivationConfiguration()
 var remute = new Remute(config);
 ```
 
-## Array support
-Remute does support arrays. 
-```cs
-Remute.Default.With(organization, x => x.Departments[5].Employees[6].LastName, "Foo");
-```
-
 ## Syntax sugar
 There is an extension method enabling chained modifications on any object.
 ```cs
