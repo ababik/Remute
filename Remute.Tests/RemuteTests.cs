@@ -101,7 +101,7 @@ namespace Remutable.Tests
         }
 
         [TestMethod]
-        public void FiledSpecified_ThrowsException()
+        public void FieldSpecified_ThrowsException()
         {
             var invalid = new InvalidProperty("property");
             var remute = new Remute();

@@ -22,14 +22,11 @@ namespace Remutable
         public delegate void EmitEventHandler(object source, object target, object value, string[] affectedProperties);
         public event EmitEventHandler OnEmit;
 
-        private delegate object ResolveInstanceDelegate<T>(T source, int[] indexes);
-        private delegate void AssignIndexDelegate<T>(T source, int[] indexes, object value);
-        private delegate int ResolveIndexParameterDelegate();
+        private delegate object ResolveInstanceDelegate<T>(T source);
 
         private ActivationConfiguration ActivationConfiguration { get; }
         private Dictionary<ActivationContextCacheKey, ActivationContext> ActivationContextCache { get; }
         private Dictionary<InstanceExpressionCacheKey, Delegate> ResolveInstanceExpressionCache { get; }
-        private Dictionary<InstanceExpressionCacheKey, Delegate> AssignIndexExpressionCache { get; }
 
         /// <summary>
         /// Creates Remute instance.
@@ -51,7 +48,6 @@ namespace Remutable
             ActivationConfiguration = activationConfiguration ?? throw new ArgumentNullException(nameof(activationConfiguration));
             ActivationContextCache = new Dictionary<ActivationContextCacheKey, ActivationContext>();
             ResolveInstanceExpressionCache = new Dictionary<InstanceExpressionCacheKey, Delegate>();
-            AssignIndexExpressionCache = new Dictionary<InstanceExpressionCacheKey, Delegate>();
         }
 
         /// <summary>
@@ -83,14 +79,11 @@ namespace Remutable
                 InstanceExpression = expression.Body
             };
 
-            ExtractIndexExpressions(processContext);
-
             while (processContext.InstanceExpression != processContext.SourceParameterExpression)
             {
                 if (TryProcessMemberExpression(processContext)) continue;
-                if (TryProcessArrayIndexExpression(processContext)) continue;
 
-                throw new NotSupportedException($"Unable to process expresion. Expression: '{processContext.InstanceExpression}'.");
+                throw new NotSupportedException($"Unable to process expression. Expression: '{processContext.InstanceExpression}'.");
             }
 
             var target = (TInstance)processContext.Target;
@@ -133,71 +126,18 @@ namespace Remutable
 
         private bool TryProcessMemberExpression<TSource>(ProcessContext<TSource> processContext)
         {
-            if (processContext.InstanceExpression is MemberExpression memberExpression)
+            if (processContext.InstanceExpression is MemberExpression memberExpression && memberExpression.Member is PropertyInfo property)
             {
                 processContext.InstanceExpression = memberExpression.Expression;
 
                 var result = processContext.Target;
-                var property = memberExpression.Member as PropertyInfo;
                 var type = property.DeclaringType;
                 var instance = ResolveInstance(processContext);
                 var activationContext = GetActivationContext(type, type);
                 var arguments = ResolveActivatorArguments(activationContext.ParameterResolvers, property, instance, ref result);
 
                 processContext.Target = activationContext.Activator.Invoke(arguments);
-
-                if (processContext.IsLastProcessedIndex == false)
-                {
-                    processContext.AffectedProperties.Add(property.Name);
-                }
-
-                processContext.IsLastProcessedIndex = false;
-
-                return true;
-            }
-
-            return false;
-        }
-
-        private bool TryProcessArrayIndexExpression<TSource>(ProcessContext<TSource> processContext)
-        {
-            if (processContext.InstanceExpression is IndexExpression indexExpression && indexExpression.Object is MemberExpression memberExpression)
-            {
-                processContext.InstanceExpression = memberExpression;
-
-                var property = memberExpression.Member as PropertyInfo;
-
-                var key = new InstanceExpressionCacheKey(typeof(TSource), processContext.InstanceExpression);
-                var compiledExpression = default(AssignIndexDelegate<TSource>);
-
-                if (AssignIndexExpressionCache.TryGetValue(key, out var assignIndexDelegate))
-                {
-                    compiledExpression = (AssignIndexDelegate<TSource>)assignIndexDelegate;
-                }
-                else
-                {
-                    var elementType = property.PropertyType.GetElementType();
-                    var propertyExpression = Expression.Property(memberExpression.Expression, property);
-                    var arrayAccessExpression = Expression.ArrayAccess(propertyExpression, indexExpression.Arguments[0]);
-                    var parameterExpression = Expression.Parameter(typeof(object));
-                    var parameterConvertExpression = Expression.Convert(parameterExpression, elementType);
-                    var assignExpression = Expression.Assign(arrayAccessExpression, parameterConvertExpression);
-                    var lambdaExpression = Expression.Lambda<AssignIndexDelegate<TSource>>(assignExpression, processContext.SourceParameterExpression, processContext.IndexParameterExpression, parameterExpression);
-                    compiledExpression = lambdaExpression.Compile();
-
-                    AssignIndexExpressionCache[key] = compiledExpression;
-                }
-
-                compiledExpression.Invoke(processContext.Source, processContext.IndexParameterValues.ToArray(), processContext.Target);
-
-                processContext.Target = ResolveInstance(processContext);
-
-                var lastIndex = processContext.IndexParameterValues.Count - 1;
-                var lastValue = processContext.IndexParameterValues[lastIndex];
-                processContext.IndexParameterValues.RemoveAt(lastIndex);
-
-                processContext.AffectedProperties.Add(property.Name + "[" + lastValue + "]");
-                processContext.IsLastProcessedIndex = true;
+                processContext.AffectedProperties.Add(property.Name);
 
                 return true;
             }
@@ -355,98 +295,12 @@ namespace Remutable
             else
             {
                 var instanceConvertExpression = Expression.Convert(processContext.InstanceExpression, typeof(object));
-                var lambdaExpression = Expression.Lambda<ResolveInstanceDelegate<TSource>>(instanceConvertExpression, processContext.SourceParameterExpression, processContext.IndexParameterExpression);
+                var lambdaExpression = Expression.Lambda<ResolveInstanceDelegate<TSource>>(instanceConvertExpression, processContext.SourceParameterExpression);
                 compiledExpression = lambdaExpression.Compile();
                 ResolveInstanceExpressionCache[key] = compiledExpression;
             }
 
-            return compiledExpression.Invoke(processContext.Source, processContext.IndexParameterValues.ToArray());
-        }
-
-        private int ResolveIndexParameter(Expression expression)
-        {
-            var lambdaExpression = Expression.Lambda<ResolveIndexParameterDelegate>(expression);
-            var resolveIndexParameterDelegate = lambdaExpression.Compile();
-            var result = resolveIndexParameterDelegate.Invoke();
-            return result;
-        }
-
-        private void ExtractIndexExpressions<TSource>(ProcessContext<TSource> processContext)
-        {
-            var properties = new List<PropertyInfo>();
-            var indexes = new List<int?>();
-            var expression = processContext.InstanceExpression;
-
-            while (expression != processContext.SourceParameterExpression)
-            {
-                {
-                    if (expression is MemberExpression memberExpression &&
-                        memberExpression.Member is PropertyInfo property)
-                    {
-                        expression = memberExpression.Expression;
-                        properties.Add(property);
-                        indexes.Add(null);
-
-                        continue;
-                    }
-                }
-
-                {
-                    if (expression is BinaryExpression binaryExpression &&
-                        binaryExpression.Left is MemberExpression memberExpression &&
-                        memberExpression.Member is PropertyInfo property)
-                    {
-                        var index = default(int?);
-
-                        if (binaryExpression.Right is ConstantExpression constantExpression)
-                        {
-                            index = (int)constantExpression.Value;
-                        }
-                        else
-                        {
-                            index = ResolveIndexParameter(binaryExpression.Right);
-                        }
-
-                        expression = memberExpression.Expression;
-                        properties.Add(property);
-                        indexes.Add(index.Value);
-
-                        continue;
-                    }
-                }
-
-                throw new NotSupportedException($"Unable to process expression. Expression: '{expression}'.");
-            }
-
-            processContext.InstanceExpression = processContext.SourceParameterExpression;
-            processContext.IndexParameterExpression = Expression.Parameter(typeof(int[]), "index");
-            processContext.IndexParameterValues = new List<int>();
-
-            properties.Reverse();
-            indexes.Reverse();
-
-            var indexCounter = 0;
-
-            for (var i = 0; i < properties.Count; i++)
-            {
-                var property = properties[i];
-                var index = indexes[i];
-
-                if (index.HasValue)
-                {
-                    var arrayAccessExpression = Expression.ArrayAccess(processContext.IndexParameterExpression, Expression.Constant(indexCounter));
-                    indexCounter++;
-
-                    var propertyExpression = Expression.Property(processContext.InstanceExpression, property);
-                    processContext.InstanceExpression = Expression.ArrayAccess(propertyExpression, arrayAccessExpression);
-
-                    processContext.IndexParameterValues.Add(index.Value);
-                }
-                else
-                {
-                    processContext.InstanceExpression = Expression.Property(processContext.InstanceExpression, property);
-                }
-            }
+            return compiledExpression.Invoke(processContext.Source);
         }
     }
 }
