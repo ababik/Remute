@@ -11,7 +11,7 @@ namespace Remutable.Tests
         [TestMethod]
         public void SetFirstLevelProperyTest()
         {
-            // ~9 ms
+            // ~12 ms
 
             var remute = new Remute();
 
@@ -33,7 +33,7 @@ namespace Remutable.Tests
         [TestMethod]
         public void SetNestedProperyTest()
         {
-            // ~15 ms
+            // ~19 ms
             
             var remute = new Remute();
 

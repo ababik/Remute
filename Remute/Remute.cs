@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -25,8 +26,8 @@ namespace Remutable
         private delegate object ResolveInstanceDelegate<T>(T source);
 
         private ActivationConfiguration ActivationConfiguration { get; }
-        private Dictionary<ActivationContextCacheKey, ActivationContext> ActivationContextCache { get; }
-        private Dictionary<InstanceExpressionCacheKey, Delegate> ResolveInstanceExpressionCache { get; }
+        private ConcurrentDictionary<ActivationContextCacheKey, ActivationContext> ActivationContextCache { get; }
+        private ConcurrentDictionary<InstanceExpressionCacheKey, Delegate> ResolveInstanceExpressionCache { get; }
 
         /// <summary>
         /// Creates Remute instance.
@@ -46,8 +47,8 @@ namespace Remutable
         public Remute(ActivationConfiguration activationConfiguration)
         {
             ActivationConfiguration = activationConfiguration ?? throw new ArgumentNullException(nameof(activationConfiguration));
-            ActivationContextCache = new Dictionary<ActivationContextCacheKey, ActivationContext>();
-            ResolveInstanceExpressionCache = new Dictionary<InstanceExpressionCacheKey, Delegate>();
+            ActivationContextCache = new ConcurrentDictionary<ActivationContextCacheKey, ActivationContext>();
+            ResolveInstanceExpressionCache = new ConcurrentDictionary<InstanceExpressionCacheKey, Delegate>();
         }
 
         /// <summary>
