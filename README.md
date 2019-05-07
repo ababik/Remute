@@ -118,4 +118,5 @@ Remute does not use reflection / Activator.CreateInstance for object creation. I
 ## Get it
 Remute is available as .Net Standard assembly via Nuget
 
+`dotnet add package Remute` or
 `Install-Package Remute`
