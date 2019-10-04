@@ -80,6 +80,12 @@ namespace Remutable
                 InstanceExpression = expression.Body
             };
 
+            var actualValue = (TValue)ResolveInstance(processContext);
+            if (object.Equals(actualValue, value))
+            {
+                return source;
+            }
+
             while (processContext.InstanceExpression != processContext.SourceParameterExpression)
             {
                 if (TryProcessMemberExpression(processContext)) continue;

@@ -67,6 +67,44 @@ namespace Remutable.Tests
         }
 
         [TestMethod]
+        public void SetSameObject_NoUpdate()
+        {
+            var organization = new Organization("organization 1", new Department("department 1", null, null));
+            var remute = new Remute();
+            var actual = remute.With(organization, x => x.Name, "organization 1");
+            Assert.AreSame(organization.Name, actual.Name);
+            Assert.AreSame(organization, actual);
+            Assert.AreSame(organization.DevelopmentDepartment, actual.DevelopmentDepartment);
+        }
+
+        [TestMethod]
+        public void SetSameValue_NoUpdate()
+        {
+            var managerId = Guid.NewGuid();
+            var organization = new Organization("organization 1", new Department("department 1", new Employee(managerId, "Joe", "Doe"), null));
+            var remute = new Remute();
+            var actual = remute.With(organization, x => x.DevelopmentDepartment.Manager.Id, managerId);
+            Assert.AreSame(organization, actual);
+            Assert.AreSame(organization.DevelopmentDepartment, actual.DevelopmentDepartment);
+            Assert.AreSame(organization.DevelopmentDepartment.Manager, actual.DevelopmentDepartment.Manager);
+            Assert.AreEqual(organization.DevelopmentDepartment.Manager.Id, actual.DevelopmentDepartment.Manager.Id);
+            Assert.AreEqual(managerId, actual.DevelopmentDepartment.Manager.Id);
+        }
+
+        [TestMethod]
+        public void SetSameNull_NoUpdate()
+        {
+            var organization = new Organization("organization 1", new Department(null, new Employee(Guid.NewGuid(), "Joe", "Doe"), null));
+            var remute = new Remute();
+            var actual = remute.With(organization, x => x.DevelopmentDepartment.Title, null);
+            Assert.IsNull(actual.DevelopmentDepartment.Title);
+            Assert.AreSame(organization, actual);
+            Assert.AreSame(organization.DevelopmentDepartment, actual.DevelopmentDepartment);
+            Assert.AreSame(organization.DevelopmentDepartment.Title, actual.DevelopmentDepartment.Title);
+            Assert.AreSame(organization.DevelopmentDepartment.Manager, actual.DevelopmentDepartment.Manager);
+        }
+
+        [TestMethod]
         public void UnableToFindConstructor_ThrowsException()
         {
             var invalid = new InvalidMultipleConstructor();
