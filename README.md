@@ -26,7 +26,7 @@ var expected = new Employee("John", "Doe");
 var actual = remute.With(expected, x => x.FirstName, "Foo");
 ```
 
-Generic method `With` returns new object where first name in update:
+Generic method `With` returns new object where first name is updated:
 ```cs
 Assert.AreNotSame(expected.FirstName, actual.FirstName);
 Assert.AreSame(expected.LastName, actual.LastName);
