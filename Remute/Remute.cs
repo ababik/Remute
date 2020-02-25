@@ -138,7 +138,7 @@ namespace Remutable
                 processContext.InstanceExpression = memberExpression.Expression;
 
                 var result = processContext.Target;
-                var type = property.DeclaringType;
+                var type = memberExpression.Expression.Type;
                 var instance = ResolveInstance(processContext);
                 var activationContext = GetActivationContext(type, type);
                 var arguments = ResolveActivatorArguments(activationContext.ParameterResolvers, property, instance, ref result);
@@ -233,7 +233,7 @@ namespace Remutable
 
         private ParameterResolver[] GetParameterResolvers(Type type, ConstructorInfo constructor)
         {
-            var properties = type.GetTypeInfo().DeclaredProperties.ToArray();
+            var properties = GetUsableProperties(type);
             var parameters = constructor.GetParameters();
 
             var parameterResolvers = new ParameterResolver[parameters.Length];
@@ -268,7 +268,7 @@ namespace Remutable
                 var parameterResolver = parameterResolvers[i];
                 var argument = default(object);
 
-                if (parameterResolver.Property == property)
+                if (parameterResolver.Property.Name == property?.Name)
                 {
                     argument = result;
                     result = instance;
@@ -308,6 +308,11 @@ namespace Remutable
             }
 
             return compiledExpression.Invoke(processContext.Source);
+        }
+
+        internal static PropertyInfo[] GetUsableProperties(Type type)
+        {
+            return type.GetTypeInfo().GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.GetProperty).ToArray();
         }
     }
 }
