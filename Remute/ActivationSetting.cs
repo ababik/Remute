@@ -27,7 +27,7 @@ namespace Remutable
                 throw new Exception($"Invalid parameter '{parameter.Name}'. Parameter must be a member of '{constructor.DeclaringType}' constructor.");
             }
 
-            if (properties.SingleOrDefault(x => x.Name == property.Name) == null)
+            if (properties.SingleOrDefault(x => Remute.SameMembers(x, property)) is null)
             {
                 throw new Exception($"Invalid property '{property.Name}'. Must be a member of '{constructor.DeclaringType}'.");
             }

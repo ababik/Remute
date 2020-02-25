@@ -268,7 +268,7 @@ namespace Remutable
                 var parameterResolver = parameterResolvers[i];
                 var argument = default(object);
 
-                if (parameterResolver.Property.Name == property?.Name)
+                if (property != null && SameMembers(parameterResolver.Property, property))
                 {
                     argument = result;
                     result = instance;
@@ -313,6 +313,11 @@ namespace Remutable
         internal static PropertyInfo[] GetUsableProperties(Type type)
         {
             return type.GetTypeInfo().GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.GetProperty).ToArray();
+        }
+
+        internal static bool SameMembers(MemberInfo member1, MemberInfo member2)
+        {
+            return member1.Module == member2.Module && member1.MetadataToken == member2.MetadataToken;
         }
     }
 }
