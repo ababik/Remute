@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using static Remutable.Extensions.ReflectionExtensions;
 
 namespace Remutable
 {
@@ -13,7 +14,7 @@ namespace Remutable
 
         public ActivationSetting(ConstructorInfo constructor, Dictionary<ParameterInfo, PropertyInfo> parameters)
         {
-            var properties = Remute.GetUsableProperties(constructor.DeclaringType);
+            var properties = GetInstanceProperties(constructor.DeclaringType);
             parameters.ToList().ForEach(x => Validate(constructor, x.Key, x.Value, properties));
 
             Constructor = constructor;
@@ -27,7 +28,7 @@ namespace Remutable
                 throw new Exception($"Invalid parameter '{parameter.Name}'. Parameter must be a member of '{constructor.DeclaringType}' constructor.");
             }
 
-            if (properties.SingleOrDefault(x => Remute.SameMembers(x, property)) is null)
+            if (properties.SingleOrDefault(x => CompareInstanceProperties(x, property)) is null)
             {
                 throw new Exception($"Invalid property '{property.Name}'. Must be a member of '{constructor.DeclaringType}'.");
             }
