@@ -11,7 +11,7 @@
     <Authors>Alexey Babik</Authors>
     <Company />
     <Description>.NET tool to create new immutable object applying lambda expressions to the existing immutable object</Description>
-    <Copyright>Copyright © Alexey Babik 2019</Copyright>
+    <Copyright>Copyright © Alexey Babik 2020</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/ababik/Remute</PackageProjectUrl>
     <RepositoryUrl>https://github.com/ababik/Remute</RepositoryUrl>
