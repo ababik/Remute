@@ -18,8 +18,8 @@
     <PackageTags>immutable lambda expression</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <RootNamespace>Remutable</RootNamespace>
-    <Version>1.2.2</Version>
-    <AssemblyVersion>1.2.2</AssemblyVersion>
+    <Version>1.2.3</Version>
+    <AssemblyVersion>1.2.3</AssemblyVersion>
   </PropertyGroup>
 <!--
   <PropertyGroup>
