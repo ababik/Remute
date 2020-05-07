@@ -1,5 +1,5 @@
 # Remute
-Remute .NET tool to create new immutable object applying lambda expressions to the existing immutable object.
+Remute C# library to create new immutable object applying lambda expressions to the existing immutable object.
 
 ## Examples (flat and nested object structures)
 
