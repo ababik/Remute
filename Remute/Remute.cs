@@ -178,7 +178,7 @@ namespace Remutable
                 return setting.Constructor;
             }
 
-            var constructors = type.GetTypeInfo().DeclaredConstructors.Where(ctor => !ctor.IsStatic);
+            var constructors = GetInstanceConstructors(type);
 
             if (constructors.Count() != 1)
             {

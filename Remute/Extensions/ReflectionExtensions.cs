@@ -6,6 +6,15 @@ namespace Remutable.Extensions
 {
     internal static class ReflectionExtensions
     {
+        public static ConstructorInfo[] GetInstanceConstructors(Type type)
+        {
+            return type
+                .GetTypeInfo()
+                .DeclaredConstructors
+                .Where(x => x.IsStatic == false)
+                .ToArray();
+        }
+
         public static PropertyInfo[] GetInstanceProperties(Type type)
         {
             return type
