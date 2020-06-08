@@ -155,5 +155,27 @@ namespace Remutable.Tests
 
             Assert.Fail();
         }
+
+        [TestMethod]
+        public void StaticConstructor_Success()
+        {
+            var original = new StaticConstructor("original");
+            var remute = new Remute();
+            var actual = remute.With(original, x => x.Property1, "updated value");
+            Assert.AreEqual("updated value", actual.Property1);
+            Assert.AreEqual("original", original.Property1);
+            Assert.AreNotSame(original, actual);
+        }
+
+        [TestMethod]
+        public void StaticFieldInitialization_Success()
+        {
+            var original = StaticFieldInit.Default;
+            var remute = new Remute();
+            var actual = remute.With(original, x => x.Property1, "updated value");
+            Assert.AreEqual("updated value", actual.Property1);
+            Assert.AreEqual("Default", original.Property1);
+            Assert.AreNotSame(original, actual);
+        }
     }
 }
