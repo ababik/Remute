@@ -10,7 +10,7 @@
   <PropertyGroup>
     <Authors>Alexey Babik</Authors>
     <Company />
-    <Description>.NET tool to create new immutable object applying lambda expressions to the existing immutable object</Description>
+    <Description>C# library to create new immutable object applying lambda expressions to the existing immutable object</Description>
     <Copyright>Copyright © Alexey Babik 2020</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/ababik/Remute</PackageProjectUrl>
@@ -18,8 +18,8 @@
     <PackageTags>immutable lambda expression</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <RootNamespace>Remutable</RootNamespace>
-    <Version>1.2.3</Version>
-    <AssemblyVersion>1.2.3</AssemblyVersion>
+    <Version>1.2.4</Version>
+    <AssemblyVersion>1.2.4</AssemblyVersion>
   </PropertyGroup>
 <!--
   <PropertyGroup>
