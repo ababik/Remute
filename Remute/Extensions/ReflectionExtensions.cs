@@ -12,6 +12,7 @@ namespace Remutable.Extensions
                 .GetTypeInfo()
                 .DeclaredConstructors
                 .Where(x => x.IsStatic == false)
+                .Where(x => x.IsPublic == true)
                 .ToArray();
         }
 
