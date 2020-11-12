@@ -32,7 +32,7 @@ Assert.AreNotSame(expected.FirstName, actual.FirstName);
 Assert.AreSame(expected.LastName, actual.LastName);
 ```
 
-Remute works with immutable nested object structures.
+Remute works with immutable nested object structures (including C# 9 records).
 
 Define few more immutable classes:
 
